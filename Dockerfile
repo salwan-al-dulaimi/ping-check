@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     nodejs \
     npm \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath gd zip
 
 # Install Composer
@@ -24,18 +25,22 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy project files
-COPY . .
+# Copy composer files first (for caching)
+COPY composer.json composer.lock ./
 
 # Install PHP dependencies
-RUN composer install --no-interaction --prefer-dist --optimize-autoloader
+RUN composer install --no-interaction --prefer-dist --optimize-autoloader --no-scripts
 
-# Set correct permissions
-RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 /var/www/html/storage
+# Copy the rest of the application
+COPY . .
 
-# Expose port 80
-EXPOSE 80
+# Ensure required Laravel directories exist and have correct permissions
+RUN mkdir -p storage bootstrap/cache \
+    && chown -R www-data:www-data /var/www/html \
+    && chmod -R 775 storage bootstrap/cache
 
-# Start Laravel development server
-CMD php artisan serve --host=0.0.0.0 --port=80
+# Expose PHP-FPM port
+EXPOSE 9000
+
+# Start PHP-FPM
+CMD ["php-fpm"]
