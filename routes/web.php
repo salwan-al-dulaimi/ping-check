@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\PingController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 
@@ -9,10 +10,8 @@ Route::inertia('/', 'Welcome', [
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('dashboard', 'Dashboard')->name('dashboard');
-});
-
-Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('ping', 'Ping')->name('ping');
+    Route::get('/pings', [PingController::class, 'getAllPings'])->name('pings.all');
 });
 
 require __DIR__.'/settings.php';
