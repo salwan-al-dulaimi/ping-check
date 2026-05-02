@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import InputError from '@/components/InputError.vue';
 import PlaceholderPattern from '@/components/PlaceholderPattern.vue';
 import { onMounted, ref } from 'vue';
 
@@ -13,6 +14,7 @@ const pings = ref<Array<{ id: number; site_name: string; website_address: string
 const siteName = ref('');
 const website = ref('');
 const processing = ref(false);
+const errors = ref<{ site_name?: string; website_address?: string }>({});
 
 const loadPings = async () => {
     try {
@@ -33,11 +35,31 @@ const loadPings = async () => {
 };
 
 const submitPing = async () => {
-    if (!siteName.value || !website.value) {
+    const trimmedSiteName = siteName.value.trim();
+    const trimmedWebsite = website.value.trim();
+
+    errors.value = {};
+
+    if (!trimmedSiteName) {
+        errors.value.site_name = 'Please enter a site name.';
+    }
+
+    if (!trimmedWebsite) {
+        errors.value.website_address = 'Please enter a website address.';
+    }
+
+    if (errors.value.site_name || errors.value.website_address) {
         return;
     }
 
     processing.value = true;
+
+    if (!trimmedWebsite.includes('.') || trimmedWebsite.includes(' ')) {
+        errors.value.website_address =
+            'Please enter a valid website address with a dot, for example google.com.';
+        processing.value = false;
+        return;
+    }
 
     try {
         const response = await fetch(pingsStore.url(), {
@@ -53,7 +75,7 @@ const submitPing = async () => {
             credentials: 'same-origin',
             body: JSON.stringify({
                 site_name: siteName.value,
-                website_address: website.value,
+                website_address: trimmedWebsite,
             }),
         });
 
@@ -62,6 +84,10 @@ const submitPing = async () => {
             pings.value.unshift(createdPing);
             siteName.value = '';
             website.value = '';
+            errors.value = {};
+        } else if (response.status === 422) {
+            const responseData = await response.json();
+            errors.value = responseData.errors ?? {};
         } else {
             console.error('Failed to save ping:', await response.text());
         }
@@ -104,6 +130,7 @@ defineOptions({
                     placeholder="Google"
                     v-model="siteName"
                 />
+                <InputError :message="errors.site_name" />
             </div>
 
             <div class="grid gap-2">
@@ -118,6 +145,7 @@ defineOptions({
                     placeholder="www.google.com"
                     v-model="website"
                 />
+                <InputError :message="errors.website_address" />
             </div>
 
             <Button type="submit" class="mt-2 w-full" :disabled="processing" :tabindex="3">

@@ -44,7 +44,14 @@ class PingController extends Controller
     {
         $data = $request->validate([
             'site_name' => ['required', 'string', 'max:255'],
-            'website_address' => ['required', 'string', 'max:255'],
+            'website_address' => [
+                'required',
+                'string',
+                'max:255',
+                'regex:/^[^\s]+\.[^\s]+$/',
+            ],
+        ], [
+            'website_address.regex' => 'The website address must include a dot and contain no spaces, for example google.com.',
         ]);
 
         $ping = Ping::create([
