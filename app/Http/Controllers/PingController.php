@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\Ping;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class PingController extends Controller
 {
@@ -21,7 +22,9 @@ class PingController extends Controller
      */
     public function getAllPings()
     {
-        $pings = Ping::where('user_id', auth()->id())->get();
+        $pings = Ping::where('user_id', Auth::id())
+            ->orderByDesc('created_at')
+            ->get();
 
         return response()->json($pings);
     }
@@ -39,7 +42,18 @@ class PingController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $data = $request->validate([
+            'site_name' => ['required', 'string', 'max:255'],
+            'website_address' => ['required', 'string', 'max:255'],
+        ]);
+
+        $ping = Ping::create([
+            'user_id' => Auth::id(),
+            'site_name' => $data['site_name'],
+            'website_address' => $data['website_address'],
+        ]);
+
+        return response()->json($ping, 201);
     }
 
     /**

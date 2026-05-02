@@ -11,9 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('ping', function (Blueprint $table) {
+        Schema::create('pings', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->string('site_name');
             $table->string('website_address');
             $table->timestamps();
         });
