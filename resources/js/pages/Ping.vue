@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-import { all as pingsAll } from '@/routes/pings';
+import { all as pingsAll, store as pingsStore } from '@/routes/pings';
 import { ping } from '@/routes';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -40,7 +40,7 @@ const submitPing = async () => {
     processing.value = true;
 
     try {
-        const response = await fetch(pingsAll.url(), {
+        const response = await fetch(pingsStore.url(), {
             method: 'POST',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
