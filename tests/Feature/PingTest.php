@@ -22,6 +22,15 @@ test('authenticated users can store pings', function () {
     ]);
 
     $response->assertCreated();
+    $response->assertJsonStructure([
+        'id',
+        'site_name',
+        'website_address',
+        'user_id',
+        'status_code',
+        'created_at',
+        'updated_at',
+    ]);
     $response->assertJson([
         'site_name' => 'Google',
         'website_address' => 'www.google.com',
@@ -59,6 +68,16 @@ test('authenticated users can fetch their pings', function () {
 
     $response->assertOk();
     $response->assertJsonCount(1);
+    $response->assertJsonStructure([
+        '*' => [
+            'id',
+            'site_name',
+            'website_address',
+            'status_code',
+            'created_at',
+            'updated_at',
+        ],
+    ]);
     $response->assertJsonFragment([
         'site_name' => 'Local',
         'website_address' => 'local.test',

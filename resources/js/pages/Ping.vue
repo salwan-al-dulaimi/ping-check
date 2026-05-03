@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-import { all as pingsAll, store as pingsStore, update as pingsUpdate, destroy as pingsDestroy } from '@/routes/pings';
+import {
+    all as pingsAll,
+    store as pingsStore,
+    update as pingsUpdate,
+    destroy as pingsDestroy,
+} from '@/routes/pings';
 import { ping } from '@/routes';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,22 +13,75 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import InputError from '@/components/InputError.vue';
 import PlaceholderPattern from '@/components/PlaceholderPattern.vue';
-import { onMounted, ref } from 'vue';
+import { onMounted, onUnmounted, ref } from 'vue';
 import { Pencil, Trash2 } from 'lucide-vue-next';
 
-const pings = ref<Array<{ id: number; site_name: string; website_address: string; status_code?: number | null }>>([]);
-const editingPing = ref<{ id: number; site_name: string; website_address: string; status_code?: number | null } | null>(null);
+const pings = ref<
+    Array<{
+        id: number;
+        site_name: string;
+        website_address: string;
+        status_code?: number | null;
+        created_at: string;
+        updated_at: string;
+    }>
+>([]);
+const editingPing = ref<{
+    id: number;
+    site_name: string;
+    website_address: string;
+    status_code?: number | null;
+    created_at?: string;
+    updated_at?: string;
+} | null>(null);
 const siteName = ref('');
 const website = ref('');
 const processing = ref(false);
 const errors = ref<{ site_name?: string; website_address?: string }>({});
+
+const now = ref(Date.now());
+let nowIntervalId: number | null = null;
+
+const updateNow = () => {
+    now.value = Date.now();
+};
+
+const formatRelativeTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const diffSeconds = Math.floor((now.value - date.getTime()) / 1000);
+
+    if (diffSeconds < 60) {
+        return 'moments ago';
+    }
+
+    const diffMinutes = Math.floor(diffSeconds / 60);
+    if (diffMinutes < 60) {
+        return diffMinutes === 1
+            ? 'a minute ago'
+            : `${diffMinutes} minutes ago`;
+    }
+
+    const diffHours = Math.floor(diffMinutes / 60);
+    if (diffHours < 24) {
+        return diffHours === 1
+            ? 'an hour ago'
+            : `${diffHours} hours ago`;
+    }
+
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays === 1) {
+        return 'a day ago';
+    }
+
+    return `${diffDays} days ago`;
+};
 
 const loadPings = async () => {
     try {
         const response = await fetch(pingsAll.url(), {
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json',
+                Accept: 'application/json',
             },
             credentials: 'same-origin',
         });
@@ -35,6 +93,18 @@ const loadPings = async () => {
         console.error('Failed to fetch pings:', error);
     }
 };
+
+onMounted(() => {
+    loadPings();
+    updateNow();
+    nowIntervalId = window.setInterval(updateNow, 60_000);
+});
+
+onUnmounted(() => {
+    if (nowIntervalId !== null) {
+        clearInterval(nowIntervalId);
+    }
+});
 
 const submitPing = async () => {
     const trimmedSiteName = siteName.value.trim();
@@ -65,18 +135,21 @@ const submitPing = async () => {
 
     try {
         const isUpdating = editingPing.value !== null;
-        const url = isUpdating ? pingsUpdate.url(editingPing.value!.id) : pingsStore.url();
+        const url = isUpdating
+            ? pingsUpdate.url(editingPing.value!.id)
+            : pingsStore.url();
         const method = isUpdating ? 'PATCH' : 'POST';
 
         const response = await fetch(url, {
             method,
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json',
+                Accept: 'application/json',
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document
-                    .querySelector('meta[name="csrf-token"]')
-                    ?.getAttribute('content') ?? '',
+                'X-CSRF-TOKEN':
+                    document
+                        .querySelector('meta[name="csrf-token"]')
+                        ?.getAttribute('content') ?? '',
             },
             credentials: 'same-origin',
             body: JSON.stringify({
@@ -119,14 +192,24 @@ const resetForm = () => {
     errors.value = {};
 };
 
-const startEditing = (pingItem: { id: number; site_name: string; website_address: string; status_code?: number | null }) => {
+const startEditing = (pingItem: {
+    id: number;
+    site_name: string;
+    website_address: string;
+    status_code?: number | null;
+}) => {
     editingPing.value = pingItem;
     siteName.value = pingItem.site_name;
     website.value = pingItem.website_address;
     errors.value = {};
 };
 
-const deletePing = async (pingItem: { id: number; site_name: string; website_address: string; status_code?: number | null }) => {
+const deletePing = async (pingItem: {
+    id: number;
+    site_name: string;
+    website_address: string;
+    status_code?: number | null;
+}) => {
     if (!confirm(`Delete ${pingItem.site_name}?`)) {
         return;
     }
@@ -136,9 +219,10 @@ const deletePing = async (pingItem: { id: number; site_name: string; website_add
             method: 'DELETE',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-TOKEN': document
-                    .querySelector('meta[name="csrf-token"]')
-                    ?.getAttribute('content') ?? '',
+                'X-CSRF-TOKEN':
+                    document
+                        .querySelector('meta[name="csrf-token"]')
+                        ?.getAttribute('content') ?? '',
             },
             credentials: 'same-origin',
         });
@@ -173,7 +257,9 @@ defineOptions({
 <template>
     <Head title="Ping" />
 
-    <div class="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
+    <div
+        class="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4"
+    >
         <form @submit.prevent="submitPing" class="grid gap-4">
             <div class="grid gap-2">
                 <Label for="site-name">Site name</Label>
@@ -206,7 +292,12 @@ defineOptions({
                 <InputError :message="errors.website_address" />
             </div>
 
-            <Button type="submit" class="mt-2 w-full" :disabled="processing" :tabindex="3">
+            <Button
+                type="submit"
+                class="mt-2 w-full"
+                :disabled="processing"
+                :tabindex="3"
+            >
                 <Spinner v-if="processing" />
                 {{ editingPing ? 'Update Ping' : 'Save Ping' }}
             </Button>
@@ -229,17 +320,45 @@ defineOptions({
                     :key="pingItem.id"
                     class="rounded-xl border border-border bg-card p-4 shadow-sm"
                 >
-                    <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                    <div
+                        class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
+                    >
                         <div>
-                            <p class="font-semibold">{{ pingItem.site_name }}</p>
-                            <p class="text-sm text-slate-600 dark:text-slate-400">
+                            <p class="font-semibold">
+                                {{ pingItem.site_name }}
+                            </p>
+                            <p
+                                class="text-sm text-slate-600 dark:text-slate-400"
+                            >
                                 {{ pingItem.website_address }}
                             </p>
-                            <p class="text-sm text-slate-500 dark:text-slate-400">
-                                Status: <span class="font-medium">{{ pingItem.status_code ?? 'Failed' }}</span>
+                            <p
+                                class="text-sm text-slate-500 dark:text-slate-400"
+                            >
+                                Status:
+                                <span
+                                    class="font-medium"
+                                    :class="
+                                        pingItem.status_code == 200
+                                            ? 'text-green-500'
+                                            : 'text-red-500'
+                                    "
+                                >
+                                    {{ pingItem.status_code ?? 'Failed' }}
+                                </span>
+                            </p>
+                            <p
+                                class="text-sm text-slate-500 dark:text-slate-400"
+                            >
+                                Created: {{ formatRelativeTime(pingItem.created_at) }}
+                            </p>
+                            <p
+                                class="text-sm text-slate-500 dark:text-slate-400"
+                            >
+                                Updated: {{ formatRelativeTime(pingItem.updated_at) }}
                             </p>
                         </div>
-                        <div class="flex items-center gap-2 mt-3 md:mt-0">
+                        <div class="mt-3 flex items-center gap-2 md:mt-0">
                             <button
                                 type="button"
                                 class="inline-flex items-center gap-2 rounded-md bg-amber-400 px-3 py-2 text-sm font-medium text-slate-950 transition hover:bg-amber-300"
