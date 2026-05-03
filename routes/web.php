@@ -13,6 +13,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('ping', 'Ping')->name('ping');
     Route::get('/pings', [PingController::class, 'getAllPings'])->name('pings.all');
     Route::post('/pings', [PingController::class, 'store'])->name('pings.store');
+    Route::patch('/pings/{ping}', [PingController::class, 'update'])->name('pings.update');
+    Route::delete('/pings/{ping}', [PingController::class, 'destroy'])->name('pings.destroy');
 });
 
 require __DIR__.'/settings.php';

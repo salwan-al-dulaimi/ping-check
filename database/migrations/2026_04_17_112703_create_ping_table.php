@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('site_name');
             $table->string('website_address');
+            $table->unsignedSmallInteger('status_code')->nullable();
             $table->timestamps();
         });
     }
@@ -25,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('ping');
+        Schema::dropIfExists('pings');
     }
 };
