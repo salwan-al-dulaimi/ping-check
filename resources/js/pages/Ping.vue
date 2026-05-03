@@ -22,6 +22,7 @@ const pings = ref<
         site_name: string;
         website_address: string;
         status_code?: number | null;
+        checkTime?: number;
         created_at: string;
         updated_at: string;
     }>
@@ -31,13 +32,15 @@ const editingPing = ref<{
     site_name: string;
     website_address: string;
     status_code?: number | null;
+    checkTime?: number;
     created_at?: string;
     updated_at?: string;
 } | null>(null);
 const siteName = ref('');
 const website = ref('');
+const checkTime = ref(1);
 const processing = ref(false);
-const errors = ref<{ site_name?: string; website_address?: string }>({});
+const errors = ref<{ site_name?: string; website_address?: string; checkTime?: string }>({});
 
 const now = ref(Date.now());
 let nowIntervalId: number | null = null;
@@ -155,6 +158,7 @@ const submitPing = async () => {
             body: JSON.stringify({
                 site_name: siteName.value,
                 website_address: trimmedWebsite,
+                check_time: checkTime.value,
             }),
         });
 
@@ -255,136 +259,77 @@ defineOptions({
 </script>
 
 <template>
+
     <Head title="Ping" />
 
-    <div
-        class="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4"
-    >
-        <form @submit.prevent="submitPing" class="grid gap-4">
-            <div class="grid gap-2">
-                <Label for="site-name">Site name</Label>
-                <Input
-                    id="site-name"
-                    type="text"
-                    name="site_name"
-                    required
-                    autofocus
-                    :tabindex="1"
-                    autocomplete="off"
-                    placeholder="Google"
-                    v-model="siteName"
-                />
-                <InputError :message="errors.site_name" />
-            </div>
-
-            <div class="grid gap-2">
-                <Label for="website">Website address</Label>
-                <Input
-                    id="website"
-                    type="text"
-                    name="website_address"
-                    required
-                    :tabindex="2"
-                    autocomplete="off"
-                    placeholder="www.google.com"
-                    v-model="website"
-                />
-                <InputError :message="errors.website_address" />
-            </div>
-
-            <Button
-                type="submit"
-                class="mt-2 w-full"
-                :disabled="processing"
-                :tabindex="3"
-            >
-                <Spinner v-if="processing" />
-                {{ editingPing ? 'Update Ping' : 'Save Ping' }}
-            </Button>
-
-            <button
-                v-if="editingPing"
-                type="button"
-                class="mt-2 inline-flex w-full items-center justify-center rounded-md border border-border bg-transparent px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
-                @click="resetForm"
-            >
-                Cancel editing
-            </button>
-        </form>
-
-        <div v-if="pings.length > 0" class="mt-4">
-            <h3 class="text-lg font-semibold">Your Pings</h3>
-            <ul class="space-y-3">
-                <li
-                    v-for="pingItem in pings"
-                    :key="pingItem.id"
-                    class="rounded-xl border border-border bg-card p-4 shadow-sm"
-                >
-                    <div
-                        class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
-                    >
-                        <div>
-                            <p class="font-semibold">
-                                {{ pingItem.site_name }}
-                            </p>
-                            <p
-                                class="text-sm text-slate-600 dark:text-slate-400"
-                            >
-                                {{ pingItem.website_address }}
-                            </p>
-                            <p
-                                class="text-sm text-slate-500 dark:text-slate-400"
-                            >
-                                Status:
-                                <span
-                                    class="font-medium"
-                                    :class="
-                                        pingItem.status_code == 200
-                                            ? 'text-green-500'
-                                            : 'text-red-500'
-                                    "
-                                >
-                                    {{ pingItem.status_code ?? 'Failed' }}
-                                </span>
-                            </p>
-                            <p
-                                class="text-sm text-slate-500 dark:text-slate-400"
-                            >
-                                Created: {{ formatRelativeTime(pingItem.created_at) }}
-                            </p>
-                            <p
-                                class="text-sm text-slate-500 dark:text-slate-400"
-                            >
-                                Updated: {{ formatRelativeTime(pingItem.updated_at) }}
-                            </p>
-                        </div>
-                        <div class="mt-3 flex items-center gap-2 md:mt-0">
-                            <button
-                                type="button"
-                                class="inline-flex items-center gap-2 rounded-md bg-amber-400 px-3 py-2 text-sm font-medium text-slate-950 transition hover:bg-amber-300"
-                                @click="startEditing(pingItem)"
-                            >
-                                <Pencil class="h-4 w-4" />
-                                Edit
-                            </button>
-                            <button
-                                type="button"
-                                class="inline-flex items-center gap-2 rounded-md bg-rose-500 px-3 py-2 text-sm font-medium text-white transition hover:bg-rose-400"
-                                @click="deletePing(pingItem)"
-                            >
-                                <Trash2 class="h-4 w-4" />
-                                Delete
-                            </button>
-                        </div>
-                    </div>
-                </li>
-            </ul>
+    <form @submit.prevent="submitPing" class="space-y-4">
+    <div class="flex flex-col md:flex-row items-start gap-4">
+        <div class="grid w-full flex-1 gap-1">
+            <Label for="site-name">Site name</Label>
+            <Input
+                id="site-name"
+                type="text"
+                name="site_name"
+                required
+                autofocus
+                :tabindex="1"
+                autocomplete="off"
+                placeholder="Google"
+                v-model="siteName"
+            />
+            <InputError :message="errors.site_name" />
         </div>
 
-        <div
-            class="relative min-h-screen flex-1 rounded-xl border border-sidebar-border/70 md:min-h-min dark:border-sidebar-border"
-        >
-            <PlaceholderPattern />
+        <div class="grid w-full flex-1 gap-1">
+            <Label for="website">Website address</Label>
+            <Input
+                id="website"
+                type="text"
+                name="website_address"
+                required
+                :tabindex="2"
+                autocomplete="off"
+                placeholder="www.google.com"
+                v-model="website"
+            />
+            <InputError :message="errors.website_address" />
+        </div>
+
+        <div class="grid w-full md:w-32 gap-1">
+            <Label for="check-interval">Interval (Hrs)</Label>
+            <Input
+                id="check-interval"
+                type="number"
+                name="check_interval"
+                required
+                min="1"
+                :tabindex="3"
+                placeholder="1"
+                v-model="checkTime"
+            />
+            <InputError :message="errors.checkTime" />
         </div>
     </div>
+
+    <div class="flex flex-col gap-2">
+        <Button
+            type="submit"
+            class="mt-2 w-full"
+            :disabled="processing"
+            :tabindex="4"
+        >
+            <Spinner v-if="processing" />
+            {{ editingPing ? 'Update Ping' : 'Save Ping' }}
+        </Button>
+
+        <button
+            v-if="editingPing"
+            type="button"
+            class="inline-flex w-full items-center justify-center rounded-md border border-border bg-transparent px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+            @click="resetForm"
+        >
+            Cancel editing
+        </button>
+    </div>
+</form>
 </template>
