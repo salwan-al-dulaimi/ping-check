@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Models\Website;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 
 #[Fillable(['name', 'email', 'password'])]
@@ -35,5 +36,10 @@ class User extends Authenticatable
     public function pings()
     {
         return $this->hasMany(Ping::class);
+    }
+
+    public function websites()
+    {
+        return $this->hasMany(Website::class);
     }
 }

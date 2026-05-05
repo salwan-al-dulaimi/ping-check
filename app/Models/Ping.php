@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Ping extends Model
 {
-    protected $fillable = ['user_id', 'site_name', 'website_address', 'status_code'];
+    protected $fillable = ['user_id', 'site_name', 'website_address', 'status_code', 'check_time'];
 
     protected $casts = [
         'status_code' => 'integer',
