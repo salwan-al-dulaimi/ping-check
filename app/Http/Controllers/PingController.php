@@ -50,10 +50,12 @@ class PingController extends Controller
                 'max:255',
                 'regex:/^[^\s]+\.[^\s]+$/',
             ],
+            'check_time' => ['required', 'integer', 'min:1'],
         ], [
             'website_address.regex' => 'The website address must include a dot and contain no spaces, for example google.com.',
+            'check_time.min' => 'The check time must be at least 1 second.',
         ]);
-
+        
         $siteUrl = $data['website_address'];
 
         if (! preg_match('/^https?:\/\//i', $siteUrl)) {
@@ -74,6 +76,7 @@ class PingController extends Controller
             'site_name' => $data['site_name'],
             'website_address' => $data['website_address'],
             'status_code' => $statusCode,
+            'check_time' => $data['check_time'],
         ]);
 
         return response()->json($ping, 201);
@@ -94,8 +97,10 @@ class PingController extends Controller
                 'max:255',
                 'regex:/^[^\s]+\.[^\s]+$/',
             ],
+            'check_time' => ['required', 'integer', 'min:1'],
         ], [
             'website_address.regex' => 'The website address must include a dot and contain no spaces, for example google.com.',
+            'check_time.min' => 'The check time must be at least 1 second.',
         ]);
 
         $siteUrl = $data['website_address'];
@@ -117,6 +122,7 @@ class PingController extends Controller
             'site_name' => $data['site_name'],
             'website_address' => $data['website_address'],
             'status_code' => $statusCode,
+            'check_time' => $data['check_time'] ?? null,
         ]);
 
         return response()->json($ping);

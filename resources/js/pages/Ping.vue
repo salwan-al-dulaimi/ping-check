@@ -174,6 +174,7 @@ const submitPing = async () => {
                 pings.value.unshift(savedPing);
                 siteName.value = '';
                 website.value = '';
+                checkTime.value = 1;
                 errors.value = {};
             }
         } else if (response.status === 422) {
@@ -196,53 +197,53 @@ const resetForm = () => {
     errors.value = {};
 };
 
-const startEditing = (pingItem: {
-    id: number;
-    site_name: string;
-    website_address: string;
-    status_code?: number | null;
-}) => {
-    editingPing.value = pingItem;
-    siteName.value = pingItem.site_name;
-    website.value = pingItem.website_address;
-    errors.value = {};
-};
+// const startEditing = (pingItem: {
+//     id: number;
+//     site_name: string;
+//     website_address: string;
+//     status_code?: number | null;
+// }) => {
+//     editingPing.value = pingItem;
+//     siteName.value = pingItem.site_name;
+//     website.value = pingItem.website_address;
+//     errors.value = {};
+// };
 
-const deletePing = async (pingItem: {
-    id: number;
-    site_name: string;
-    website_address: string;
-    status_code?: number | null;
-}) => {
-    if (!confirm(`Delete ${pingItem.site_name}?`)) {
-        return;
-    }
+// const deletePing = async (pingItem: {
+//     id: number;
+//     site_name: string;
+//     website_address: string;
+//     status_code?: number | null;
+// }) => {
+//     if (!confirm(`Delete ${pingItem.site_name}?`)) {
+//         return;
+//     }
 
-    try {
-        const response = await fetch(pingsDestroy.url(pingItem.id), {
-            method: 'DELETE',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-TOKEN':
-                    document
-                        .querySelector('meta[name="csrf-token"]')
-                        ?.getAttribute('content') ?? '',
-            },
-            credentials: 'same-origin',
-        });
+//     try {
+//         const response = await fetch(pingsDestroy.url(pingItem.id), {
+//             method: 'DELETE',
+//             headers: {
+//                 'X-Requested-With': 'XMLHttpRequest',
+//                 'X-CSRF-TOKEN':
+//                     document
+//                         .querySelector('meta[name="csrf-token"]')
+//                         ?.getAttribute('content') ?? '',
+//             },
+//             credentials: 'same-origin',
+//         });
 
-        if (response.ok) {
-            pings.value = pings.value.filter((item) => item.id !== pingItem.id);
-            if (editingPing.value?.id === pingItem.id) {
-                resetForm();
-            }
-        } else {
-            console.error('Failed to delete ping:', await response.text());
-        }
-    } catch (error) {
-        console.error('Failed to delete ping:', error);
-    }
-};
+//         if (response.ok) {
+//             pings.value = pings.value.filter((item) => item.id !== pingItem.id);
+//             if (editingPing.value?.id === pingItem.id) {
+//                 resetForm();
+//             }
+//         } else {
+//             console.error('Failed to delete ping:', await response.text());
+//         }
+//     } catch (error) {
+//         console.error('Failed to delete ping:', error);
+//     }
+// };
 
 onMounted(loadPings);
 
@@ -263,7 +264,7 @@ defineOptions({
     <Head title="Ping" />
 
     <form @submit.prevent="submitPing" class="space-y-4">
-    <div class="flex flex-col md:flex-row items-start gap-4">
+    <div class="m-6 flex flex-col md:flex-row items-start gap-4">
         <div class="grid w-full flex-1 gap-1">
             <Label for="site-name">Site name</Label>
             <Input
@@ -311,7 +312,7 @@ defineOptions({
         </div>
     </div>
 
-    <div class="flex flex-col gap-2">
+    <div class="m-6 flex flex-col gap-2">
         <Button
             type="submit"
             class="mt-2 w-full"
